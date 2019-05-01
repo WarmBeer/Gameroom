@@ -1,0 +1,28 @@
+[{
+    "Gamertag": "Warm Beer",
+    "Nationality": "Dutch",
+    "Birthday": "1999-01-01",
+    "Bio": "Hello!",
+    "Avatar_url": "/icons/chief.png",
+    "Games": {
+        "pc": [
+            "112916",
+            "55036",
+            "20910",
+            "102060",
+            "19164",
+            "22778",
+            "65445"
+        ],
+        "playstation": [
+            "6036",
+            "19561",
+            "113098",
+            "76882"
+        ],
+        "xbox": [
+            "987",
+            "6803"
+        ]
+    }
+}]
