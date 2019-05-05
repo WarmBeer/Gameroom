@@ -23,6 +23,7 @@ var games = {
 var user_info;
 var games_info;
 var auth_token;
+var room;
 
 function retrieveInfo() {
     socket.emit("retrieveInfo", auth_token,
@@ -36,6 +37,39 @@ function retrieveInfo() {
                         console.log(message);
                     }
                 });
+}
+
+function start_search() {
+    if($("#se_minage").val() > 0 && $("#se_maxage").val() > 0) {
+        console.log("starting search")
+        let minage = $("#se_minage").val();
+        let maxage = $("#se_maxage").val();
+        let nationality = $("#se_nationality").val();
+        let platform = $("#se_platform").val();
+        let common = $("#se_games").val();
+        
+        $("#div_players").hide();
+        $("#div_cancel").show();
+        $("#search_players").show();
+        
+        socket.emit("ready", {
+            "Nationality": nationality,
+            "Platform": platform,
+            "minAge": minage,
+            "maxAge": maxage,
+            "Common": common,
+            "Birthday": user_info["Birthday"],
+            "Games": user_info["Games"]
+        }, auth_token)
+    }
+}
+
+function stop_search() {
+    socket.emit("unready");
+    
+    $("#div_players").show();
+    $("#div_cancel").hide();
+    $("#search_players").hide();
 }
 
 function addGame() {
@@ -193,11 +227,34 @@ function hideInfo() {
     $("#load_games").hide();
 }
 
+function openChat() {
+    document.getElementById("profile_page").classList.remove("active");
+    document.getElementById("hub_page").classList.remove("active");
+    document.getElementById("search_page").classList.remove("active");
+    document.getElementById("messages_page").classList.add("active");
+    $("#messages").css('visibility', 'visible');
+}
+
+function hideChat() {
+    $("#messages").css('visibility', 'hidden');
+}
+
 $(document).ready(() => {
     socket = io()
     
     auth_token = getQueryVariable("auth");
     retrieveInfo();
+    
+    socket.on('match', function(data) {
+        console.log(data);
+        $("#div_players").show();
+        $("#div_cancel").hide();
+        $("#search_players").hide();
+        room = data.room;
+        $("#message_box").html("");
+        $("#message_box").append("<li class='announce'><div class='match_info'><img src='"+data.Avatar+"'><span id='match_gamertag'>"+data.Gamertag+"</span><span id='match_bio'>"+data.Age+", "+data.Nationality+"</span></div></li><li class='announce'><div class='match_info' style='height: auto;'><span id='match_desc'>"+data.Bio+"</span></div></li>")
+        openChat();
+    });
     
     close = document.getElementById("close_note");
     close.addEventListener('click', function() {
@@ -208,4 +265,22 @@ $(document).ready(() => {
     $("#showBox").on("click", function(event){
       event.stopPropagation();
     });
+    
+    $('form').submit(function(e){
+      e.preventDefault(); // prevents page reloading
+        console.log(room)
+        if($('#m').val() != "" && room != null) {
+            socket.emit('chat message', $('#m').val(), room);
+            $('#message_box').append('<li><div class="incoming">'+$("#m").val()+'</div></li>');
+            $('#m').val('');
+            return false;
+        } else {
+            console.log('om')
+        }
+    });
+    
+    socket.on('chat message', function(msg){
+      $('#message_box').append('<li><div>'+msg+'</div></li>');
+    });
+    
 });

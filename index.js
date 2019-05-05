@@ -24,11 +24,19 @@ var db_config = {
 };
 
 var user_data = [];
+var clients = [];
+var rooms = new Array();
 
 const project_name = "Gameroom"
 const currentVersion = "0.0.1"
 
 var connection;
+
+function _calculateAge(birthday) { // birthday is a date
+    var ageDifMs = Date.now() - birthday.getTime();
+    var ageDate = new Date(ageDifMs); // miliseconds from epoch
+    return Math.abs(ageDate.getUTCFullYear() - 1970);
+}
 
 function handleDisconnect() {
   connection = mysql.createConnection(db_config); // Recreate the connection, since
@@ -167,8 +175,154 @@ app.post('/signup', function(request, response) {
 	}
 });
 
+function checkMatch(client1, client2) {
+    
+    let common_games = 0;
+    let common_games_pc = [];
+    let common_games_xbox = [];
+    let common_games_playstation = [];
 
-io.on("connection", socket => {
+    if(client1.data["Nationality"] != client2.data["Nationality"] && (client1.data["Nationality"] != "all" || client2.data["Nationality"] != "all")) {
+        console.log("no national");
+        return false;
+    }
+
+    if(client1.data["minAge"] > _calculateAge(new Date(client2.data["Birthday"])) || _calculateAge(new Date(client2.data["Birthday"])) > client1.data["maxAge"]) {
+        console.log("no age");
+        return false;
+    }
+
+    //Games in common
+    if(client1.data["Platform"] == "pc" || client1.data["Platform"] == "all") {
+        for(let g = 0;g < client1.data["Games"]["pc"].length;g++) {
+            if(client2.data["Games"]["pc"].indexOf(client1.data["Games"]["pc"][g]) > -1) {
+                common_games_pc.push(client1.data["Games"]["pc"][g]);
+            }
+        }
+    }
+
+    if(client1.data["Platform"] == "xbox" || client1.data["Platform"] == "all") {
+        for(let g = 0;g < client1.data["Games"]["xbox"].length;g++) {
+            if(client2.data["Games"]["xbox"].indexOf(client1.data["Games"]["xbox"][g]) > -1) {
+                common_games_xbox.push(client1.data["Games"]["xbox"][g]);
+            }
+        }
+    }
+
+    if(client1.data["Platform"] == "playstation" || client1.data["Platform"] == "all") {
+        for(let g = 0;g < client1.data["Games"]["playstation"].length;g++) {
+            if(client2.data["Games"]["playstation"].indexOf(client1.data["Games"]["playstation"][g]) > -1) {
+                common_games_playstation.push(client1.data["Games"]["playstation"][g]);
+            }
+        }
+    }
+    
+    common_games = common_games_pc.length + common_games_xbox.length + common_games_playstation.length;
+    
+    if(common_games < client1.data["Common"] || common_games < client2.data["Common"]) {
+        console.log("no common");
+        return false;
+    }
+    
+    return {
+        "pc": common_games_pc,
+        "xbox": common_games_xbox,
+        "playstation": common_games_playstation
+    }
+};
+
+//poll to match users
+function pollFunc(fn, interval) {
+    interval = interval || 1000;
+    (function p() {
+        fn();
+        setTimeout(p, interval);
+
+    })();
+};
+
+pollFunc(function() {
+    var pairs = [];
+    for (var i = clients.length - 1; i >= 0; i--) {
+
+        var currUser;
+        if (clients[i].ready && !clients[i].hasPair) {
+            currUser = clients[i];
+            for (var c = clients.length - 1; c >= 0; c--) {
+                if (clients[c].ready && !clients[c].hasPair && currUser !== clients[c]) {
+                    let common_games = checkMatch(currUser, clients[c]);
+                    if(common_games) {
+                        pairs.push({
+                            a: currUser,
+                            b: clients[c],
+                            info: common_games
+                        });
+                        currUser.ready = false;
+                        clients[c].ready = false;
+                        currUser.hasPair = true;
+                        clients[c].hasPair = true;   
+                    }
+                }
+            }
+        }
+    }
+    
+    for (var b = pairs.length - 1; b >= 0; b--) {
+        console.log('Pair Made Between: "' + pairs[b].a.userid + '"" and "' + pairs[b].b.userid + '"" with common games: ' + pairs[b].info);
+        var secret = makeid(24);
+        rooms[secret] = {
+            a: pairs[b].a,
+            b: pairs[b].b
+        }
+        console.log(pairs[b].b.information);
+        pairs[b].a.emit('match', { 
+            Gamertag: pairs[b].b.information['Gamertag'],
+            Nationality: pairs[b].b.information['Nationality'],
+            Bio: pairs[b].b.information['Bio'],
+            Avatar: pairs[b].b.information['Avatar_url'],
+            Age: _calculateAge(new Date(pairs[b].b.information['Birthday'])),
+            info: pairs[b].info,
+            room: secret
+        });
+        pairs[b].b.emit('match', { 
+            Gamertag: pairs[b].a.information['Gamertag'],
+            Nationality: pairs[b].a.information['Nationality'],
+            Bio: pairs[b].a.information['Bio'],
+            Avatar: pairs[b].a.information['Avatar_url'],
+            Age: _calculateAge(new Date(pairs[b].a.information['Birthday'])),
+            info: pairs[b].info,
+            room: secret
+        });
+    }
+}, 1000);
+
+io.on("connection", socket => {    
+    clients.push(socket);
+    
+    socket.on("chat message", function(msg, roomkey){
+        if(rooms[roomkey].a != socket) {
+            rooms[roomkey].a.emit('chat message', msg);
+        } else {
+            rooms[roomkey].b.emit('chat message', msg);
+        }
+    });
+    
+    socket.on("ready", function(data, token) {
+        clients[clients.indexOf(socket)].userid = user_data[token]["user_id"];
+        clients[clients.indexOf(socket)].information = user_data[token]['user_info'];
+        clients[clients.indexOf(socket)].data = data;
+        clients[clients.indexOf(socket)].ready = true;
+        clients[clients.indexOf(socket)].hasPair = false;
+    });
+    
+    socket.on("unready", function() {
+        clients[clients.indexOf(socket)].ready = false;
+        clients[clients.indexOf(socket)].hasPair = true
+    });
+    
+    socket.on("disconnect", function() {
+        clients.splice(clients.indexOf(socket), 1);
+    })
     
     socket.on("updateInfo", function(data) {
         if(data != null && user_data.indexOf(user_data[data["token"]] > -1)) {
@@ -186,6 +340,143 @@ io.on("connection", socket => {
             });
         }
     })
+    
+    socket.on("start_search", function(data, token, callback) {
+        
+        if(data != null && user_data.indexOf(user_data[token] > -1)) {
+            console.log("searching...");
+            let user_id = user_data[token]["user_id"];
+            let own_posts = 0;
+            
+            connection.query('SELECT * FROM posts WHERE matched = 0', [], function(error, results, fields) {
+                if(error != null)
+                    console.error(error);
+                
+                var current_match;
+
+                if (results.length > 0) {
+                    for(var i = 0;i < results.length;i++) {
+                        let common_games_pc = [];
+                        let common_games_xbox = [];
+                        let common_games_playstation = [];
+                        let common_games = 0;
+                        let post_info = JSON.parse(results[i]["information"]);
+                        
+                        if(results[i]["user_id"] == user_id) {
+                            own_posts++;
+                            continue;
+                        }
+                        
+                        if(data["Nationality"] != post_info["Nationality"] && data["Nationality"] != "all") {
+                            console.log("no national");
+                            continue;
+                        }
+                        
+                        if(data["minAge"] > _calculateAge(new Date(post_info["Birthday"])) || _calculateAge(new Date(post_info["Birthday"])) > data["maxAge"]) {
+                            console.log("no age");
+                            continue;
+                        }
+                                                
+                        //Games in common
+                        if(data["Platform"] == "pc" || data["Platform"] == "all") {
+                            for(let g = 0;g < data["Games"]["pc"].length;g++) {
+                                if(post_info["Games"]["pc"].indexOf(data["Games"]["pc"][g]) > -1) {
+                                    common_games_pc.push(data["Games"]["pc"][g]);
+                                }
+                            }
+                        }
+                        
+                        if(data["Platform"] == "xbox" || data["Platform"] == "all") {
+                            for(let g = 0;g < data["Games"]["xbox"].length;g++) {
+                                if(post_info["Games"]["xbox"].indexOf(data["Games"]["xbox"][g]) > -1) {
+                                    common_games_xbox.push(data["Games"]["xbox"][g]);
+                                }
+                            }
+                        }
+                        
+                        if(data["Platform"] == "playstation" || data["Platform"] == "all") {
+                            for(let g = 0;g < data["Games"]["playstation"].length;g++) {
+                                if(post_info["Games"]["playstation"].indexOf(data["Games"]["playstation"][g]) > -1) {
+                                    common_games_playstation.push(data["Games"]["playstation"][g]);
+                                }
+                            }
+                        }
+                        
+                        common_games = common_games_pc.length + common_games_playstation.length + common_games_xbox.length;
+                        
+                        if(common_games < data["Common"] || common_games < post_info["Common"]) {
+                            console.log("no common: " + common_games);
+                            continue;
+                        }
+                        
+                        if(current_match == null || current_match != null && common_games > current_match["Common"]) {
+                            current_match = {
+                                "id": results[i]["id"],
+                                "Common": common_games,
+                                "Games": {
+                                    "pc": common_games_pc,
+                                    "xbox": common_games_xbox,
+                                    "playstation": common_games_playstation
+                                },
+                                "post": post_info
+                            }
+                            console.log(current_match)
+                        }
+                    }
+                    if(current_match != null) {
+                        connection.query('UPDATE posts SET matched = ? WHERE id = ?', [user_id, current_match["id"]], function(error, results) {
+                            if(error)
+                                throw(error);
+                            else
+                                console.log("updated");
+                        });
+                        
+                        callback(false, current_match);
+                        return;
+                    } else {
+                        let post_json = data;
+                            post_json = JSON.stringify(post_json);
+                            connection.query('INSERT INTO posts (user_id, matched, information) VALUES (?, ?, ?)', [user_id, 0, post_json], function(error, results, fields) {
+                                if(error) {
+                                    throw(error);
+                                } else {
+                                    console.log("Created post");
+                                }
+                            });
+                        
+                        while(current_match == null) {
+                            connection.query('SELECT * FROM posts WHERE matched != 0 AND confirmed == 0 AND user_id = ?', [user_id], function(error, results, fields) {
+                                if(error != null)
+                                    console.error(error);
+                                
+                                if(results > 0) {
+                                    
+                                }
+                            });
+                        }
+                        
+                        callback(true, "No match.");
+                        return;
+                    }
+                } else {
+                    let post_json = data;
+                    post_json = JSON.stringify(post_json);
+                    connection.query('INSERT INTO posts (user_id, matched, information) VALUES (?, ?, ?)', [user_id, 0, post_json], function(error, results, fields) {
+                        if(error) {
+                            throw(error);
+                        } else {
+                            console.log("Created post");
+                        }
+                    });
+                    
+                    callback(true, "No match.");
+                    return;
+                }
+            });
+        } else {
+            console.log("not searching...");
+        }
+    });
         
     socket.on("gameSearch", function(data, callback){
         

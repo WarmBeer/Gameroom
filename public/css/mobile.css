@@ -60,4 +60,14 @@
         width: 100vw;
         left: 0;
     }
+    
+    .send_box input {
+        width: 60%;
+    }
+    
+    #message_box {
+        width: calc(90%);
+        margin: 0px 5%;
+        margin-bottom: 0;
+    }
 }
