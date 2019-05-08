@@ -228,6 +228,10 @@ function hideInfo() {
 }
 
 function openChat() {
+    clearActivePage();
+    document.getElementById("profile").classList.add("farleft");
+    document.getElementById("hub").classList.add("left");
+    document.getElementById("search").classList.add("left");
     document.getElementById("profile_page").classList.remove("active");
     document.getElementById("hub_page").classList.remove("active");
     document.getElementById("search_page").classList.remove("active");
@@ -238,6 +242,43 @@ function openChat() {
 function hideChat() {
     $("#messages").css('visibility', 'hidden');
 }
+
+function clearActivePage() {
+    hideChat();
+    document.getElementById("profile_page").classList.remove("active");
+    document.getElementById("hub_page").classList.remove("active");
+    document.getElementById("search_page").classList.remove("active");
+    document.getElementById("messages_page").classList.remove("active");
+    document.getElementById("hub").classList = "content";
+    document.getElementById("profile").classList = "content";
+    document.getElementById("search").classList = "content";
+};
+
+function profile_open() {
+    clearActivePage();
+    document.getElementById("hub").classList.add("right");
+    document.getElementById("search").classList.add("farright");
+    document.getElementById("profile_page").classList.add("active");
+};
+
+function hub_open() {
+    clearActivePage();
+    document.getElementById("profile").classList.add("left");
+    document.getElementById("search").classList.add("right");
+    document.getElementById("hub_page").classList.add("active");
+};
+
+function search_open() {
+    clearActivePage();
+    document.getElementById("profile").classList.add("farleft");
+    document.getElementById("hub").classList.add("left");
+    document.getElementById("search_page").classList.add("active");
+};
+
+function notifyPos() {
+    document.getElementById("pos").classList.add("notifying");
+    setTimeout(function(){document.getElementById("pos").classList.remove("notifying");}, 2000);
+};
 
 $(document).ready(() => {
     socket = io()
@@ -280,7 +321,8 @@ $(document).ready(() => {
     });
     
     socket.on('chat message', function(msg){
-      $('#message_box').append('<li><div>'+msg+'</div></li>');
+        $('#message_box').append('<li><div>'+msg+'</div></li>');
+        $('#message_box').scrollTop($('#message_box').prop('scrollHeight'));
     });
     
 });

@@ -24,9 +24,9 @@
                     <span id="profile_page" onclick="profile_open();">Profile</span>
                     <span id="hub_page" class="active" onclick="hub_open();">Hub</span>
                     <span id="search_page" onclick="search_open();">Search</span>
-                    <span class="icono-commentEmpty" id="messages_page" onclick="openChat();">Messages</span>
                 </div>
                 <div class="nav_account">
+                    <span class="icono-commentEmpty" id="messages_page" onclick="openChat();">Messages</span>
                     <span class="username" id="username" onclick="profile_open();"></span>
                     <img class="user-img" src="icons/chief.png">
                 </div>
@@ -254,8 +254,8 @@
       <option value="zimbabwean">Zimbabwean</option>
     </select>
                             <label>Age</label>
-                                <input type="number" min="13" max="160" id="se_minage" placeholder="Min Age">
-                                <input type="number" min="13" max="160" id="se_maxage" placeholder="Max Age">
+                                <input type="number" value="13" id="se_minage" placeholder="Min Age">
+                                <input type="number" value="99" id="se_maxage" placeholder="Max Age">
                             <label>Games in common</label>
                                 <select id="se_games">
                                     <option value="2">2+</option>
@@ -263,8 +263,8 @@
                                     <option value="8">8+</option>
                                 </select>
                             <div class="card" id="div_cancel"><a onclick="stop_search();">Cancel Search</a></div>
+                            <div class="card" id="div_players"><a onclick="start_search();">Start Matching</a></div>
                         </div>
-                        <div class="card" id="div_players"><a onclick="start_search();">Start Matching</a></div>
                     </div>
                 </div>
             </div>
@@ -587,42 +587,7 @@
             </div>
         </main>
         <script>
-            function clearActivePage() {
-                hideChat();
-                document.getElementById("profile_page").classList.remove("active");
-                document.getElementById("hub_page").classList.remove("active");
-                document.getElementById("search_page").classList.remove("active");
-                document.getElementById("messages_page").classList.remove("active");
-                document.getElementById("hub").classList = "content";
-                document.getElementById("profile").classList = "content";
-                document.getElementById("search").classList = "content";
-            };
-
-            function profile_open() {
-                clearActivePage();
-                document.getElementById("hub").classList.add("right");
-                document.getElementById("search").classList.add("farright");
-                document.getElementById("profile_page").classList.add("active");
-            };
-
-            function hub_open() {
-                clearActivePage();
-                document.getElementById("profile").classList.add("left");
-                document.getElementById("search").classList.add("right");
-                document.getElementById("hub_page").classList.add("active");
-            };
-
-            function search_open() {
-                clearActivePage();
-                document.getElementById("profile").classList.add("farleft");
-                document.getElementById("hub").classList.add("left");
-                document.getElementById("search_page").classList.add("active");
-            };
-
-            function notifyPos() {
-                document.getElementById("pos").classList.add("notifying");
-                setTimeout(function(){document.getElementById("pos").classList.remove("notifying");}, 2000);
-            };
+            
         </script>
     </body>
 </html>

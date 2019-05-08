@@ -62,7 +62,7 @@ body {
     width: 120px;
     height: 120px;
     -webkit-animation: spin 1s linear infinite;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
 }
 
 @-webkit-keyframes spin {
@@ -347,6 +347,7 @@ input, select {
 .nav_navigation {
     justify-content: space-between;
     display: flex;
+    margin-left: 90px;
 }
 
 .nav_navigation span {
@@ -359,8 +360,8 @@ input, select {
     color: rgba(0, 181, 255, 0.75);
 }
 
-.nav_navigation span.active {
-    color: rgba(0, 181, 255, 1);
+span.active {
+    color: rgba(0, 181, 255, 1)!important;
 }
 
 nav span, nav a {
@@ -546,7 +547,7 @@ a:focus, button:focus, input:focus {
     -webkit-box-shadow: 0 0 5px black;
     -moz-box-shadow: 0 0 5px black;
     box-shadow: 0 0 5px black;
-    margin-top: -50px;
+    margin-top: -60px;
     transition: all 0.2s ease-out;
     width: 20vw;
     border-radius: 4px;
@@ -720,7 +721,9 @@ a:focus, button:focus, input:focus {
     padding: 0;
     margin: 0px 30%;
     list-style-type: none;
-    overflow-y: auto;
+    overflow-y: scroll;
+    padding-right: 17px; /* Increase/decrease this value for cross-browser compatibility */
+    box-sizing: content-box; /* So the width will be 100% + 17px */
 }
 
 .send_box {
@@ -728,20 +731,18 @@ a:focus, button:focus, input:focus {
     text-align: center;
     height: 64px;
     line-height: 64px;
-    background: rgba(255,255,255,0.1);
 }
 
 .send_box button {
-    border: none;
-    background: none;
     width: 64px;
+    margin-left: 15px;
 }
 
 .send_box input {
     margin: 0;
     width: 80%;
     max-width: 400px;
-    border: none;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 #message_box li {
@@ -778,6 +779,7 @@ a:focus, button:focus, input:focus {
     width: 100%;
     margin: 0;
     margin-top: 20px;
+    border-color: orangered;
 }
 
 #match_gamertag {
@@ -800,4 +802,26 @@ a:focus, button:focus, input:focus {
     padding: 10px;
     word-wrap: break-word;
     white-space: normal;
+}
+
+#div_players {
+    cursor: pointer;
+    height: 40px;
+    line-height: 40px;
+    width: 100%;
+    margin: 0;
+    margin-top: 20px;
+    border-color: rgb(0, 181, 255);
+    color: rgb(0, 181, 255);
+}
+
+#messages_page {
+    margin-right: 15px;
+    margin-top: 20px;
+    color: rgba(0, 181, 255, 0.5);
+}
+
+.form .card{
+    font-weight: normal;
+    font-size: 1em!important;
 }
