@@ -312,6 +312,7 @@ $(document).ready(() => {
         console.log(room)
         if($('#m').val() != "" && room != null) {
             socket.emit('chat message', $('#m').val(), room);
+            $('#message_box').scrollTop($('#message_box').prop('scrollHeight'));
             $('#message_box').append('<li><div class="incoming">'+$("#m").val()+'</div></li>');
             $('#m').val('');
             return false;

@@ -633,7 +633,7 @@ a:focus, button:focus, input:focus {
     border-radius: 4px;
     background: rgba(255,255,255,0.1)!important;
     height: 64px;
-    width: 315px;
+    width: calc(100% - 10px);
     white-space: nowrap;
     float: none!important;
 }
@@ -722,6 +722,7 @@ a:focus, button:focus, input:focus {
     margin: 0px 30%;
     list-style-type: none;
     overflow-y: scroll;
+    overflow-x: hidden;
     padding-right: 17px; /* Increase/decrease this value for cross-browser compatibility */
     box-sizing: content-box; /* So the width will be 100% + 17px */
 }
@@ -746,7 +747,7 @@ a:focus, button:focus, input:focus {
 }
 
 #message_box li {
-    margin-top: 5px;
+    margin-top: 10px;
     width: calc(100%);
     display: block;
     float: left;
